@@ -21,7 +21,6 @@ import (
 	"errors"
 	"testing"
 
-	schedv1alpha1 "github.com/kubewharf/godel-scheduler-api/pkg/apis/scheduling/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
+	volcanoschedv1beta1 "volcano.sh/apis/pkg/apis/scheduling/v1beta1"
 
 	orchestrationv1alpha1 "github.com/vllm-project/aibrix/api/orchestration/v1alpha1"
 )
@@ -197,7 +197,7 @@ func TestEnsurePodGroupExist(t *testing.T) {
 	name := "test-podgroup"
 	namespace := "test-namespace"
 
-	podGroup := &schedv1alpha1.PodGroup{
+	podGroup := &volcanoschedv1beta1.PodGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "scheduling.volcano.sh/v1beta1",
 			Kind:       "PodGroup",
@@ -245,6 +245,11 @@ func TestEnsurePodGroupExist(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, tt.expectedResult, created)
+
+			if tt.expectedResult {
+				_, err := fakeClient.Resource(podGroupGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+				assert.NoError(t, err, "PodGroup should be created")
+			}
 		})
 	}
 }
@@ -254,7 +259,7 @@ func TestFinalizePodGroup(t *testing.T) {
 	name := "test-podgroup"
 	namespace := "test-namespace"
 
-	podGroup := &schedv1alpha1.PodGroup{
+	podGroup := &volcanoschedv1beta1.PodGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "scheduling.volcano.sh/v1beta1",
 			Kind:       "PodGroup",
